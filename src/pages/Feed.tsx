@@ -11,16 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Search, SortAsc, SortDesc } from 'lucide-react';
 
-const AVAILABLE_TAGS: { value: PostTag; label: string }[] = [
-  { value: 'placements', label: 'Placements' },
-  { value: 'academics', label: 'Academics' },
-  { value: 'events', label: 'Events' },
-  { value: 'general', label: 'General' },
-  { value: 'announcements', label: 'Announcements' },
-];
-
 const Feed: React.FC = () => {
-  const { posts, loading } = usePosts();
+  const { posts, communities, loading } = usePosts();
   const { user } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,7 +46,7 @@ const Feed: React.FC = () => {
       return true;
     })
     .filter(post => {
-      // Filter by selected tags
+      // Filter by selected communities
       if (selectedTags.length === 0) return true;
       return post.tags.some(tag => selectedTags.includes(tag));
     })
@@ -96,16 +88,16 @@ const Feed: React.FC = () => {
             </div>
             
             <div>
-              <Label className="mb-2 block">Filter by tags</Label>
+              <Label className="mb-2 block">Filter by communities</Label>
               <div className="flex flex-wrap gap-2">
-                {AVAILABLE_TAGS.map((tag) => (
+                {communities.map((community) => (
                   <Badge 
-                    key={tag.value}
-                    variant={selectedTags.includes(tag.value) ? "default" : "outline"}
+                    key={community.id}
+                    variant={selectedTags.includes(community.name) ? "default" : "outline"}
                     className="cursor-pointer"
-                    onClick={() => handleTagToggle(tag.value)}
+                    onClick={() => handleTagToggle(community.name)}
                   >
-                    {tag.label}
+                    {community.name}
                   </Badge>
                 ))}
               </div>
@@ -142,6 +134,17 @@ const Feed: React.FC = () => {
               <li>Keep content relevant to IGDTUW</li>
               <li>Report inappropriate content</li>
             </ul>
+          </div>
+          <div className="bg-muted rounded-lg p-4">
+            <h3 className="font-medium mb-2">Communities</h3>
+            <div className="space-y-2">
+              {communities.map(community => (
+                <div key={community.id} className="text-sm">
+                  <div className="font-medium">{community.name}</div>
+                  <div className="text-xs text-muted-foreground">{community.description}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

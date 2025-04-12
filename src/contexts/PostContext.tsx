@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "sonner";
 
-export type PostTag = 'placements' | 'academics' | 'events' | 'general' | 'announcements';
+export type PostTag = 'placements' | 'academics' | 'events' | 'general' | 'announcements' | string;
 
 export interface Post {
   id: string;
@@ -18,13 +18,25 @@ export interface Post {
   userUpvoted?: boolean; // To track if current user has upvoted
 }
 
+export interface Community {
+  id: string;
+  name: string;
+  description: string;
+  createdBy: string;
+  createdAt: string;
+  memberCount: number;
+}
+
 interface PostContextType {
   posts: Post[];
+  communities: Community[];
   loading: boolean;
   createPost: (post: Omit<Post, 'id' | 'timestamp' | 'upvotes' | 'isFlagged'>) => Promise<void>;
   upvotePost: (postId: string) => Promise<void>;
   flagPost: (postId: string) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
+  createCommunity: (name: string, description: string, userId: string) => Promise<Community | null>;
+  getDefaultCommunities: () => Community[];
 }
 
 const PostContext = createContext<PostContextType | undefined>(undefined);
@@ -37,14 +49,60 @@ export const usePosts = () => {
   return context;
 };
 
+// Initial pre-defined communities
+const DEFAULT_COMMUNITIES: Community[] = [
+  {
+    id: 'community_placements',
+    name: 'Placements',
+    description: 'Discussions about campus placements, interviews, and job opportunities',
+    createdBy: 'admin',
+    createdAt: new Date().toISOString(),
+    memberCount: 120
+  },
+  {
+    id: 'community_academics',
+    name: 'Academics',
+    description: 'Course discussions, study material, and academic guidance',
+    createdBy: 'admin',
+    createdAt: new Date().toISOString(),
+    memberCount: 150
+  },
+  {
+    id: 'community_events',
+    name: 'Events',
+    description: 'College events, workshops, seminars, and extracurricular activities',
+    createdBy: 'admin',
+    createdAt: new Date().toISOString(),
+    memberCount: 85
+  },
+  {
+    id: 'community_general',
+    name: 'General',
+    description: 'General discussions about campus life and other topics',
+    createdBy: 'admin',
+    createdAt: new Date().toISOString(),
+    memberCount: 200
+  },
+  {
+    id: 'community_announcements',
+    name: 'Announcements',
+    description: 'Important announcements from college administration',
+    createdBy: 'admin',
+    createdAt: new Date().toISOString(),
+    memberCount: 250
+  },
+];
+
 export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load posts from localStorage on mount
-    const loadPosts = async () => {
+    // Load posts and communities from localStorage on mount
+    const loadData = async () => {
       try {
+        // Load posts
         const storedPosts = localStorage.getItem('posts');
         if (storedPosts) {
           setPosts(JSON.parse(storedPosts));
@@ -91,12 +149,22 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setPosts(initialPosts);
           localStorage.setItem('posts', JSON.stringify(initialPosts));
         }
+
+        // Load communities
+        const storedCommunities = localStorage.getItem('communities');
+        if (storedCommunities) {
+          setCommunities(JSON.parse(storedCommunities));
+        } else {
+          // If no communities exist, initialize with defaults
+          setCommunities(DEFAULT_COMMUNITIES);
+          localStorage.setItem('communities', JSON.stringify(DEFAULT_COMMUNITIES));
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    loadPosts();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -105,6 +173,13 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('posts', JSON.stringify(posts));
     }
   }, [posts, loading]);
+
+  useEffect(() => {
+    // Save communities to localStorage whenever they change
+    if (!loading) {
+      localStorage.setItem('communities', JSON.stringify(communities));
+    }
+  }, [communities, loading]);
 
   const createPost = async (postData: Omit<Post, 'id' | 'timestamp' | 'upvotes' | 'isFlagged'>) => {
     try {
@@ -172,8 +247,51 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const createCommunity = async (name: string, description: string, userId: string): Promise<Community | null> => {
+    try {
+      // Check if community with this name already exists
+      const existingCommunity = communities.find(
+        c => c.name.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (existingCommunity) {
+        toast.error('A community with this name already exists');
+        return null;
+      }
+
+      const newCommunity: Community = {
+        id: `community_${Date.now()}`,
+        name,
+        description,
+        createdBy: userId,
+        createdAt: new Date().toISOString(),
+        memberCount: 1 // Creator is the first member
+      };
+
+      setCommunities(prev => [...prev, newCommunity]);
+      toast.success(`Created new community: ${name}`);
+      return newCommunity;
+    } catch (error) {
+      console.error('Error creating community:', error);
+      toast.error('Failed to create community. Please try again.');
+      return null;
+    }
+  };
+
+  const getDefaultCommunities = () => DEFAULT_COMMUNITIES;
+
   return (
-    <PostContext.Provider value={{ posts, loading, createPost, upvotePost, flagPost, deletePost }}>
+    <PostContext.Provider value={{ 
+      posts, 
+      communities, 
+      loading, 
+      createPost, 
+      upvotePost, 
+      flagPost, 
+      deletePost,
+      createCommunity,
+      getDefaultCommunities
+    }}>
       {children}
     </PostContext.Provider>
   );

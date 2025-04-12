@@ -30,6 +30,11 @@ export const useAuth = () => {
 // Admin emails list (hardcoded for MVP)
 const ADMIN_EMAILS = ['admin@igdtuw.ac.in'];
 
+// For MVP, we'll simulate a simple user database
+const MOCK_USERS: Record<string, {name: string, password: string}> = {
+  'admin@igdtuw.ac.in': { name: 'Admin', password: 'password123' }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,8 +70,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // For MVP, simulate backend validation with mock data
-      // In production, this would be an API call to backend
+      // For MVP, check if user exists
+      const userExists = MOCK_USERS[email] || localStorage.getItem(`user_${email}`);
+      
+      if (!userExists) {
+        toast.error("Account not found. Please sign up first.");
+        return false;
+      }
       
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -78,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userData: User = {
         id: `user_${Date.now()}`,
         email,
-        name: email.split('@')[0], // Just use email prefix as name for now
+        name: MOCK_USERS[email]?.name || JSON.parse(localStorage.getItem(`user_${email}`) || '{}').name || email.split('@')[0],
         isAdmin
       };
       
@@ -107,11 +117,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
+      // Check if user already exists
+      if (MOCK_USERS[email] || localStorage.getItem(`user_${email}`)) {
+        toast.error("An account with this email already exists");
+        return false;
+      }
+
       // For MVP, simulate backend validation with mock data
-      // In production, this would be an API call to backend
-      
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Store user credentials for future logins
+      localStorage.setItem(`user_${email}`, JSON.stringify({ name, password }));
       
       // Check if admin
       const isAdmin = ADMIN_EMAILS.includes(email);
@@ -124,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin
       };
       
-      // Store user data
+      // Store user data for current session
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       

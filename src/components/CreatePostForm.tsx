@@ -11,27 +11,34 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 import { PostTag, usePosts } from "@/contexts/PostContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
-const AVAILABLE_TAGS: { value: PostTag; label: string }[] = [
-  { value: 'placements', label: 'Placements' },
-  { value: 'academics', label: 'Academics' },
-  { value: 'events', label: 'Events' },
-  { value: 'general', label: 'General' },
-  { value: 'announcements', label: 'Announcements' },
-];
+import { PlusCircle } from "lucide-react";
 
 const CreatePostForm: React.FC = () => {
   const { user } = useAuth();
-  const { createPost } = usePosts();
+  const { createPost, communities, createCommunity } = usePosts();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedTags, setSelectedTags] = useState<PostTag[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [newCommunityName, setNewCommunityName] = useState('');
+  const [newCommunityDescription, setNewCommunityDescription] = useState('');
+  const [creatingCommunity, setCreatingCommunity] = useState(false);
 
   const handleTagToggle = (tag: PostTag) => {
     setSelectedTags(prev => 
@@ -55,7 +62,7 @@ const CreatePostForm: React.FC = () => {
     }
     
     if (selectedTags.length === 0) {
-      toast.error('Please select at least one tag');
+      toast.error('Please select at least one community');
       return;
     }
 
@@ -85,6 +92,42 @@ const CreatePostForm: React.FC = () => {
       console.error('Error creating post:', error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateCommunity = async () => {
+    if (!user) {
+      toast.error('You must be logged in to create a community');
+      return;
+    }
+
+    if (!newCommunityName.trim()) {
+      toast.error('Please enter a community name');
+      return;
+    }
+
+    if (!newCommunityDescription.trim()) {
+      toast.error('Please enter a community description');
+      return;
+    }
+
+    try {
+      setCreatingCommunity(true);
+      const community = await createCommunity(
+        newCommunityName.trim(), 
+        newCommunityDescription.trim(), 
+        user.id
+      );
+      
+      if (community) {
+        // Add the new community to selected tags
+        setSelectedTags(prev => [...prev, community.name]);
+        // Reset form
+        setNewCommunityName('');
+        setNewCommunityDescription('');
+      }
+    } finally {
+      setCreatingCommunity(false);
     }
   };
 
@@ -122,17 +165,67 @@ const CreatePostForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label>Tags</Label>
+            <div className="flex items-center justify-between">
+              <Label>Communities</Label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <PlusCircle size={16} />
+                    <span>New Community</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create a New Community</DialogTitle>
+                    <DialogDescription>
+                      Create a new community for a specific topic or interest
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="communityName">Community Name</Label>
+                      <Input
+                        id="communityName"
+                        value={newCommunityName}
+                        onChange={(e) => setNewCommunityName(e.target.value)}
+                        placeholder="e.g., Competitive Programming"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="communityDescription">Description</Label>
+                      <Textarea
+                        id="communityDescription"
+                        value={newCommunityDescription}
+                        onChange={(e) => setNewCommunityDescription(e.target.value)}
+                        placeholder="Briefly describe what this community is about..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button 
+                      onClick={handleCreateCommunity} 
+                      disabled={creatingCommunity}
+                    >
+                      {creatingCommunity ? 'Creating...' : 'Create Community'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="flex flex-wrap gap-2">
-              {AVAILABLE_TAGS.map((tag) => (
+              {communities.map((community) => (
                 <Button 
-                  key={tag.value}
+                  key={community.id}
                   type="button"
-                  variant={selectedTags.includes(tag.value) ? "default" : "outline"}
+                  variant={selectedTags.includes(community.name) ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleTagToggle(tag.value)}
+                  onClick={() => handleTagToggle(community.name)}
                 >
-                  {tag.label}
+                  {community.name}
                 </Button>
               ))}
             </div>

@@ -78,7 +78,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             {
               id: 'post3',
               title: 'How difficult is the Data Structures course?',
-              content: 'I'm finding the assignments challenging. Any tips from seniors?',
+              content: 'I\'m finding the assignments challenging. Any tips from seniors?',
               tags: ['academics'],
               timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
               upvotes: 5,

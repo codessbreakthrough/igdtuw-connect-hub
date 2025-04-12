@@ -7,7 +7,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PostProvider } from "./contexts/PostContext";
 import Navbar from "./components/Navbar";
+import FooterNavigation from "./components/FooterNavigation";
+import Home from "./pages/Home";
 import Feed from "./pages/Feed";
+import Communities from "./pages/Communities";
+import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Admin from "./pages/Admin";
@@ -27,13 +32,18 @@ const App = () => (
               <Navbar />
               <main className="flex-1">
                 <Routes>
-                  <Route path="/" element={<Feed />} />
+                  <Route path="/" element={<Home />} />
+                  <Route path="/feed" element={<Feed />} />
+                  <Route path="/communities" element={<Communities />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
+              <FooterNavigation />
             </div>
           </BrowserRouter>
         </PostProvider>

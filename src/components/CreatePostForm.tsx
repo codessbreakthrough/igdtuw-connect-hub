@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PostTag, usePosts } from "@/contexts/PostContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 const AVAILABLE_TAGS: { value: PostTag; label: string }[] = [
   { value: 'placements', label: 'Placements' },

@@ -15,9 +15,10 @@ import {
   SortDesc, 
   Clock, 
   TrendingUp,
-  CalendarClock 
+  CalendarClock,
+  PenSquare 
 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Select,
   SelectContent,
@@ -26,11 +27,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PostDetail from '@/components/PostDetail';
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 const Feed: React.FC = () => {
   const { posts, communities, loading } = usePosts();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [communityQuery, setCommunityQuery] = useState('');
@@ -120,6 +123,21 @@ const Feed: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* Mobile Ask Question Button - only visible on small screens */}
+      <div className="md:hidden mb-4">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="w-full flex items-center justify-center gap-2">
+              <PenSquare size={16} />
+              Ask a Question
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <CreatePostForm onSuccess={() => navigate('/feed')} showCard={false} />
+          </DialogContent>
+        </Dialog>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <CreatePostForm />

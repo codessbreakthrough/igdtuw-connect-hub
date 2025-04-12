@@ -30,7 +30,7 @@ const App = () => (
           <BrowserRouter>
             <div className="min-h-screen flex flex-col">
               <Navbar />
-              <main className="flex-1">
+              <main className="flex-1 pb-16 md:pb-0">
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/feed" element={<Feed />} />

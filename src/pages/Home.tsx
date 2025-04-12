@@ -2,8 +2,24 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UsersRound } from "lucide-react";
+import { UsersRound, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { usePosts } from "@/contexts/PostContext";
 
 // Mock data for community cards
 const communitiesData = [
@@ -33,10 +49,114 @@ const communitiesData = [
   }
 ];
 
+const CreateCommunityForm = () => {
+  const { user } = useAuth();
+  const { createCommunity } = usePosts();
+  const [name, setName] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleSubmit = async () => {
+    if (!user) {
+      toast.error('You must be logged in to create a community');
+      return;
+    }
+
+    if (!name.trim()) {
+      toast.error('Please enter a community name');
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error('Please enter a community description');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const community = await createCommunity(
+        name.trim(), 
+        description.trim(), 
+        user.id
+      );
+      
+      if (community) {
+        // Reset form
+        setName('');
+        setDescription('');
+        toast.success(`Community "${community.name}" created successfully!`);
+      }
+    } catch (error) {
+      console.error('Error creating community:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="communityName">Community Name</Label>
+        <Input
+          id="communityName"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., Competitive Programming"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="communityDescription">Description</Label>
+        <Textarea
+          id="communityDescription"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="What is this community about? Who is it for?"
+          rows={3}
+        />
+      </div>
+      <Button 
+        onClick={handleSubmit} 
+        disabled={isSubmitting}
+        className="w-full"
+      >
+        {isSubmitting ? 'Creating...' : 'Create Community'}
+      </Button>
+    </div>
+  );
+};
+
 const HomePage = () => {
+  const { user } = useAuth();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Welcome to IGDTUW Connect</h1>
+      
+      <div className="flex flex-wrap mb-10 gap-4">
+        <Link to="/feed" className="flex-1 min-w-[250px]">
+          <Button className="w-full h-12 text-lg">View All Posts</Button>
+        </Link>
+        
+        {user && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="flex-1 min-w-[250px] h-12 text-lg bg-green-600 hover:bg-green-700 flex items-center gap-2">
+                <PlusCircle size={20} />
+                Create Community
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create a New Community</DialogTitle>
+                <DialogDescription>
+                  Build a space for like-minded students to connect and share knowledge
+                </DialogDescription>
+              </DialogHeader>
+              <CreateCommunityForm />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
       
       <section className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Joinable Communities</h2>
@@ -93,10 +213,6 @@ const HomePage = () => {
           </CardFooter>
         </Card>
       </section>
-
-      <Link to="/feed">
-        <Button className="w-full">View All Posts</Button>
-      </Link>
     </div>
   );
 };

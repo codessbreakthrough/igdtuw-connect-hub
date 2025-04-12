@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from 'react-router-dom';
-import { Menu, X, Search, Bell, HelpCircle, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, Bell, HelpCircle, User, PenSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import CreatePostForm from "@/components/CreatePostForm";
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-20">
@@ -28,6 +31,23 @@ const Navbar: React.FC = () => {
               <span className="text-primary font-bold text-xl">IGDTUW Connect</span>
             </Link>
           </div>
+
+          {/* Ask a Question Button - visible on all screen sizes */}
+          {user && (
+            <div className="hidden sm:flex items-center ml-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <PenSquare size={16} />
+                    Ask a Question
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <CreatePostForm onSuccess={() => navigate('/feed')} />
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
 
           {/* Search bar - hidden on mobile until toggled */}
           <div className={`${isSearchOpen ? 'flex absolute inset-x-0 top-0 p-2 bg-white z-30 h-16 items-center' : 'hidden'} md:relative md:flex md:items-center md:ml-6`}>
@@ -101,6 +121,16 @@ const Navbar: React.FC = () => {
           <div className="flex items-center md:hidden">
             {user && (
               <>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" className="mr-2">
+                      <PenSquare size={18} />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <CreatePostForm onSuccess={() => navigate('/feed')} />
+                  </DialogContent>
+                </Dialog>
                 <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
                   <Search className="h-5 w-5" />
                 </Button>
